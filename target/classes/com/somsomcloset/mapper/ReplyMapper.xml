@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="com.somsomcloset.mapper.ReplyMapper">
+ 
+  	<!-- 댓글등록
+  	<insert id="enrollReply">
+  	<selectKey resultType="int" keyProperty="replyId" order="AFTER">
+  		
+  			SELECT REPLY_SEQ.NEXTVAL from dual
+  		
+  		</selectKey>
+  		insert into product_reply(replyId, productId, memberId, content, rating) values(#{replyId}, #{productID}, #{memberId}, #{content}, #{rating})
+  	</insert> --> 
+  	
+  	<!-- 댓글등록 -->
+  	<insert id="enrollReply">
+  	
+  		insert into product_reply(replyId, productId, memberId, content, rating) values(reply_seq.nextval, #{productId}, #{memberId}, #{content}, #{rating})
+  	
+  	</insert>
+  	
+	<select id="checkReply" resultType="integer">
+	
+		select replyId from product_reply 
+		where memberId = #{memberId} and productId = #{productId}
+	
+	</select>  	
+	
+  	<!-- 댓글 페이징 -->
+  	<select id="getReplyList" resultType="com.somsomcloset.model.ReplyDTO">
+  	
+  		<![CDATA[
+		select * from(  		
+			select rownum as rn, replyId, productId, memberId, content, rating, regDate
+			from product_reply
+			where rownum <= #{pageNum} * #{amount}  and productId = #{productId}	
+			order by regDate desc  	
+  			)
+  		where rn > (#{pageNum} -1) * #{amount}
+  		]]>	
+  		
+  	</select>
+  	
+  	<select id="getReplyTotal" resultType="int">
+  	
+  		select count(*)
+  		from product_reply
+  		where productId = #{productId}
+  	
+  	</select>	
+  	
+  	<!-- 댓글수정 -->
+  	<update id="updateReply">
+  	
+  		update product_reply set content = #{content}, rating = #{rating}
+  		where replyId = #{replyId}
+  		
+  	</update>  	
+  	
+  	<!-- 댓글 수정 팝업창 -->
+ 	<select id="getUpdateReply" resultType="com.somsomcloset.model.ReplyDTO">
+	
+		select * from product_reply
+		where replyId = #{replyId}
+		
+	</select> 	
+	
+  	<!-- 댓글 삭제 -->
+  	<delete id="deleteReply">
+  	
+  		DELETE FROM product_reply
+  		WHERE replyId = #{replyId}
+  		
+  	</delete>	
+  	
+   	<select id="getRatingAverage" resultType="double">
+  	
+  		select avg(rating)
+  		from product_reply
+  		where productId = #{productId}
+  	
+  	</select>
+		
+	
+	
+	
+ 
+  </mapper>

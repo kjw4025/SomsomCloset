@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="com.somsomcloset.mapper.AdminMapper">
+
+  	<!-- 상품 등록 -->
+  	<insert id="productEnroll">
+  	
+  		<selectKey resultType="int" keyProperty="productId" order="AFTER">
+  		
+  			SELECT PRODUCT_SEQ.currval from dual
+  		
+  		</selectKey>  
+  	
+  		insert into product(productId, productName, seller, cateName, productPrice, productStock, productDiscount, productIntro, productContents, regDate, updateDate)
+      values(PRODUCT_SEQ.NEXTVAL,#{productName}, #{seller}, #{cateName}, #{productPrice},#{productStock}, #{productDiscount}, #{productIntro},#{productContents},sysdate,sysdate)
+  	</insert>
+  	
+  	<!-- 경매 상품 등록 -->
+  	<insert id="auctionEnroll"> 
+  		<selectKey resultType="int" keyProperty="auctionId" order="AFTER">
+  		
+  			SELECT AUCTION_SEQ.currval from dual
+  		
+  		</selectKey>  
+  		insert into product_auction(auctionId, productName, productPrice, endDate, highPrice, memberId, auctionCk)
+      values(AUCTION_SEQ.NEXTVAL, #{productName}, #{productPrice}, sysdate + 7, #{highPrice}, #{memberId}, #{auctionCk})
+  	</insert>
+  	
+  	<!-- 공구 상품 등록 -->
+  	<insert id="groupProductEnroll"> 
+  		<selectKey resultType="int" keyProperty="groupProductId" order="AFTER">
+  		
+  			SELECT GROUP_SEQ.currval from dual
+  		
+  		</selectKey>  
+  		insert into groupProduct(groupProductId, groupProductName, groupProductSeller, cateName, groupProductPrice, groupProductStock, groupProductDiscount, groupProductIntro, groupProductContents, groupProductEndDate, groupProductCK)
+      values(GROUP_SEQ.NEXTVAL, #{groupProductName}, #{groupProductSeller}, #{cateName}, #{groupProductPrice}, #{groupProductStock}, #{groupProductDiscount},#{groupProductIntro}, #{groupProductContents},  sysdate + 7, #{groupProductCK})
+  	</insert>
+
+  	<!-- 카테고리 리스트-->
+  	<select id="cateList" resultType="com.somsomcloset.model.CateVO">
+  	
+  		select * from product_cate order by cateCode
+  	
+  	</select> 
+  	
+  	<!-- 상품 리스트  -->
+  	<select id="goodsGetList" resultType="com.somsomcloset.model.ProductVO">
+	  	<![CDATA[
+		select * from(
+		    select /*+INDEX_DESC(product SYS_C00328753)*/ rownum as rn, productId, productName, seller, cateName, productPrice, productStock, productDiscount, productIntro, productContents, regDate, updateDate
+		    from product
+		    where 
+		]]>    
+
+		    <if test="keyword != null">
+		    
+			    productName like '%' || #{keyword} || '%' and
+			    
+		    </if>
+		   
+		<![CDATA[    
+		    rownum <= #{pageNum} * #{amount} 
+		    )
+		where rn > (#{pageNum} -1) * #{amount}		  	
+  		]]>
+  	
+  	</select>
+  	
+  	<!-- 상품 총 개수 -->
+  	<select id="goodsGetTotal" resultType="int">
+  	
+  		select count(*) from product
+  		
+  		<if test="keyword != null">
+  		
+  			where productName like '%' || #{keyword} || '%'
+  		</if>
+  		
+  	</select>  	
+  	
+  	<!-- 경매 리스트  -->
+  	<select id="auctionGetList" resultType="com.somsomcloset.model.AuctionVO">
+	  	<![CDATA[
+		select * from(
+		    select /*+INDEX_DESC(product SYS_C00328753)*/ rownum as rn, auctionId, productName, productPrice, endDate, highPrice, memberId, auctionCk
+		    from product_auction
+		    where 
+		]]>    
+
+		    <if test="keyword != null">
+		    
+			    productName like '%' || #{keyword} || '%' and
+			    
+		    </if>
+		   
+		<![CDATA[    
+		    rownum <= #{pageNum} * #{amount} 
+		    )
+		where rn > (#{pageNum} -1) * #{amount}		  	
+  		]]>
+  	
+  	</select>
+  	
+  	<!-- 공구 리스트  -->
+  	<select id="groupProductGetList" resultType="com.somsomcloset.model.GroupProductVO">
+	  	<![CDATA[
+		select * from(
+		    select /*+INDEX_DESC(product SYS_C00328753)*/ rownum as rn, groupProductId, groupProductName, groupProductSeller, cateName, groupProductPrice, groupProductStock, groupProductDiscount, groupProductIntro, groupProductContents, groupProductEndDate, groupProductCK
+		    from groupProduct
+		    where 
+		]]>    
+
+		    <if test="keyword != null">
+		    
+			    groupProductName like '%' || #{keyword} || '%' and
+			    
+		    </if>
+		   
+		<![CDATA[    
+		    rownum <= #{pageNum} * #{amount} 
+		    )
+		where rn > (#{pageNum} -1) * #{amount}		  	
+  		]]>
+  	
+  	</select>
+  	
+  	<!-- 경매 상품 총 개수 -->
+  	<select id="auctionGetTotal" resultType="int">
+  	
+  		select count(*) from product_auction
+  		
+  		<if test="keyword != null">
+  		
+  			where productName like '%' || #{keyword} || '%'
+  		</if>
+  		
+  	</select> 
+  	
+  	<!-- 공구 상품 총 개수 -->
+  	<select id="groupProductGetTotal" resultType="int">
+  	
+  		select count(*) from groupProduct
+  		
+  		<if test="keyword != null">
+  		
+  			where groupProductName like '%' || #{keyword} || '%'
+  		</if>
+  		
+  	</select> 
+
+	<!-- 상품 조회 페이지 -->
+	<select id="goodsGetDetail" resultType="com.somsomcloset.model.ProductVO">
+		select productId, productName, seller, cateName, productPrice, productStock, productDiscount, productIntro, productContents, regDate, updateDate
+		from product
+		where productId = #{productId}
+	</select>
+	
+	
+	<!-- 상품 정보 수정 -->
+	<update id="goodsModify">
+		
+		update product set productName = #{productName}, seller = #{seller}, cateName = #{cateName}, productPrice = #{productPrice}, productStock = ${productStock}, 
+		productDiscount = #{productDiscount}, productIntro = #{productIntro}, productContents = #{productContents}, updateDate = sysdate
+		where productId = ${productId}
+		
+	</update>	
+	
+	<!-- 상품 정보 삭제-->
+	<delete id="goodsDelete">
+	
+		delete from product where productId = #{productId}
+	
+	</delete>	 
+	
+	<!-- 경매 상품 조회 페이지 -->
+	<select id="auctionGoodsGetDetail" resultType="com.somsomcloset.model.AuctionVO">
+		select auctionId, productName, productPrice, endDate, highPrice, memberId, auctionCk
+		from product_auction
+		where auctionId = #{auctionId}
+	</select>
+	
+	<!-- 공구 조회 페이지 -->
+	<select id="groupProductGetDetail" resultType="com.somsomcloset.model.GroupProductVO">
+		select groupProductId, groupProductName, groupProductSeller, cateName, groupProductPrice, groupProductStock, groupProductDiscount, groupProductIntro, groupProductContents, groupProductEndDate, groupProductCK
+		from groupProduct
+		where groupProductId = #{groupProductId}
+	</select>
+	
+	<!-- 경매 상품 정보 삭제-->
+	<delete id="auctionGoodsDelete">
+	
+		delete from product_auction where auctionId = #{auctionId}
+	
+	</delete>	
+	
+	<!-- 공구 상품 정보 삭제-->
+	<delete id="groupProductDelete">
+	
+		delete from groupProduct where groupProductId = #{groupProductId}
+	
+	</delete>
+
+	<!-- 이미지 등록 -->
+	<insert id="imageEnroll">
+	
+		insert into image(productId, fileName, uploadPath, uuid) values (#{productId}, #{fileName}, #{uploadPath}, #{uuid})
+	
+	</insert>
+	
+	<!-- 지정 상품 이미지 전체 삭제 --> 
+	<delete id="deleteImageAll">
+	
+		delete FROM image where productId = #{productId}
+	
+	</delete>	
+	
+	<!-- 어제자 날자 이미지 리스트 -->
+	<select id="checkFileList" resultType="com.somsomcloset.model.AttachImageVO">
+	
+		select * from image where uploadpath = to_char(sysdate -1, 'yyyy\mm\dd')	
+	
+	</select>
+	
+	<!-- 지정 상품 이미지 정보 얻기 -->
+	<select id="getAttachInfo" resultType="com.somsomcloset.model.AttachImageVO">
+	
+		select * from image where productId = #{productId}
+	
+	</select>	
+	
+	<!-- 주문 리스트 -->
+	<select id="getOrderList" resultType="com.somsomcloset.model.OrderDTO">
+		<![CDATA[
+		select * 
+		from(
+		    select rownum rn, orderId, memberId, orderstate, orderdate
+		    from product_order
+		    where rownum <= #{pageNum} * #{amount} 
+		]]>    
+		<if test="keyword != null">
+			and memberId like '%'||#{keyword}||'%'
+		</if>
+		<![CDATA[
+		    
+		    order by orderdate desc
+		    )
+		where rn > (#{pageNum} -1) * #{amount}
+		]]>
+	</select>	
+	
+	<!-- 상품 총 개수 -->
+	<select id="getOrderTotal" resultType="int">
+	
+		select count(*) from product_order
+		
+	    <if test="keyword != null">
+	    	where memberId like '%'||#{keyword}||'%'
+	    </if>
+	
+	</select>		
+
+  </mapper>

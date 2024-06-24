@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="com.somsomcloset.mapper.MypageMapper">
+
+	 <!-- 주문자 정보 -->
+     <select id="getMemberInfo" resultType="com.somsomcloset.model.MemberVO">
+     
+        SELECT memberId, memberName, memberMail, memberAddr1, memberAddr2, memberAddr3, money, point 
+        FROM member 
+        WHERE memberId = #{memberId}
+     
+     </select> 
+     <update id="memberModify">
+  	
+  		update member set memberId=#{memberId}, memberName=#{memberName}, memberMail=#{memberMail}, memberAddr1=#{memberAddr1}, memberAddr2=#{memberAddr2}, memberAddr3=#{memberAddr3} where memberId =#{memberId}
+  	
+  	</update>
+  	
+    <!-- 멤버 디테일 페이지 -->
+  	<select id="memberGetDetail" resultType="com.somsomcloset.model.MemberVO">
+  	
+  		select * from member where memberId = #{memberId}
+  	
+  	</select>
+  	
+  	<!-- 멤버 정보 삭제 -->
+  	<delete id="memberDelete">
+  		delete from member where memberId=#{memberId}
+  	</delete>
+	
+	<!-- 주문 리스트 -->
+	<select id="getOrderList" resultType="com.somsomcloset.model.OrderDTO">
+		<![CDATA[
+		select * 
+		from(
+		    select rownum rn, orderId, memberId, orderstate, orderdate
+		    from product_order
+		    where memberId = #{memberId} and rownum <= #{pageNum} * #{amount} 
+		]]>    
+		<![CDATA[
+		    
+		    order by orderdate desc
+		    )
+		where rn > (#{pageNum} -1) * #{amount}
+		]]>
+	</select>
+	
+	<!-- 상품 총 개수 -->
+	<select id="getOrderTotal" resultType="int">
+	
+		select count(*) from product_order where memberId = #{memberId}
+	    <if test="keyword != null">
+	    	and memberId like '%'||#{keyword}||'%'
+	    </if>
+	
+	</select>		
+
+  </mapper>

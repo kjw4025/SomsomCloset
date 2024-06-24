@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="com.somsomcloset.mapper.OrderMapper">
+
+	<!-- 주문 상품 정보 -->
+	<select id="getGoodsInfo" resultType="com.somsomcloset.model.OrderPageItemDTO">
+	
+		select productId, productName, productPrice, productDiscount
+		from product where productId = #{productId}	
+	
+	</select>
+	
+	<!-- 공구 주문 상품 정보 -->
+	<select id="getGroupGoodsInfo" resultType="com.somsomcloset.model.OrderPageItemDTO">
+	
+		select groupProductId AS productId, groupProductName AS ProductName, groupProductPrice AS ProductPrice, groupProductDiscount AS ProductDiscount
+		from groupProduct where groupProductId = #{productId}		
+	
+	</select>
+	
+	<select id="getOrderInfo" resultType="com.somsomcloset.model.OrderItemDTO">
+	
+		select productId, productPrice, productDiscount
+		from product where productId = #{productId}
+	
+	</select>
+	
+	<select id="getGroupOrderInfo" resultType="com.somsomcloset.model.OrderItemDTO">
+	
+		select groupProductId AS productId, groupProductName AS ProductName, groupProductPrice AS ProductPrice, groupProductDiscount AS ProductDiscount
+		from groupProduct where groupProductId = #{productId}
+	
+	</select>	
+	
+	<!-- 주문 테이블 등록 -->
+	<insert id="enrollOrder">
+		insert into product_order(orderId, addressee, memberId, memberAddr1, memberAddr2, memberAddr3, orderState, deliveryCost, usePoint)
+    	values(#{orderId},#{addressee}, #{memberId}, #{memberAddr1}, #{memberAddr2}, #{memberAddr3}, '배송준비', #{deliveryCost}, #{usePoint})
+	
+	</insert>	
+	
+	<!-- 주문 아이템 테이블 등록 -->
+	<insert id="enrollOrderItem">
+	
+		<selectKey resultType="int" keyProperty="orderitemId" order="AFTER">
+  		
+  			SELECT orderitem_SEQ.currval from dual
+  		
+  		</selectKey>	
+		insert into product_orderItem(orderitemId, orderId, productId, productCount, productPrice, productDiscount, savePoint)
+		values(orderitem_SEQ.NEXTVAL, #{orderId}, #{productId}, #{productCount}, #{productPrice}, #{productDiscount}, #{savePoint})
+	
+	</insert>	
+	
+	<!-- 주문 아이템 테이블 등록 -->
+	<insert id="enrollGroupOrderItem">
+	
+		<selectKey resultType="int" keyProperty="orderitemId" order="AFTER">
+  		
+  			SELECT grouporderitem_SEQ.currval from dual
+  		
+  		</selectKey>	
+		insert into groupproduct_orderItem(orderitemId, orderId, productId, productCount, productPrice, productDiscount, savePoint)
+		values(grouporderitem_SEQ.NEXTVAL, #{orderId}, #{productId}, #{productCount}, #{productPrice}, #{productDiscount}, #{savePoint})
+	
+	</insert>	
+	
+	<!-- 주문 금액 차감 -->
+	<update id="deductMoney">
+	
+		update member set money = #{money}, point = #{point} where memberId = #{memberId}
+		
+	</update>	
+	
+	<!-- 주문 재고 차감 -->
+	<update id="deductStock">
+	
+		update product set productStock = #{productStock} where productId = #{productId}
+	
+	</update>	
+	
+	<!-- 공구 주문 재고 차감 -->
+	<update id="deductGroupStock">
+	
+		update groupProduct set groupProductStock = #{groupProductStock} where groupProductId = #{groupProductId}
+	
+	</update>
+	
+	<!-- 주문취소 -->
+	<update id="orderCancle">
+	
+		update product_order set orderState = '주문취소' where orderId = #{orderId}
+		
+	</update>	
+
+	<!-- 주문 상품 정보(주문취소) -->
+	<select id="getOrderItemInfo" resultType="com.somsomcloset.model.OrderItemDTO">
+	
+		select * from product_orderItem
+		where orderId = #{orderId}
+	
+	</select>
+	
+	<!-- 주문 정보(주문 취소) -->
+	<select id="getOrder" resultType="com.somsomcloset.model.OrderDTO">
+	
+		select * from product_order
+		where orderId = #{orderId}
+	
+	</select>
+
+  </mapper>

@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="com.somsomcloset.mapper.ProductMapper">
+
+	<!-- criteria(검색조건) -->
+	<sql id="criteria">
+
+	  	<trim prefix="(" suffix=") AND" prefixOverrides="AND">
+	  		<foreach item="type" collection="typeArr">
+	  			<trim prefix="AND">
+	  				<choose>	  					
+	  					<!-- like '%' || #{cateName} || '%' -->
+	  					<when test="type == 'C'.toString()">
+	  						cateName like '%' || #{cateName} || '%'
+	  					</when>  					
+	  					<when test="type == 'T'.toString()">
+	  						ProductName like '%' || #{keyword} || '%'
+	  					</when>  					
+	  				</choose>
+	  			</trim>
+	  		</foreach>
+	  	</trim>
+
+	</sql>
+
+	 <!-- 경매 입찰 시 -->
+	 <update id="auctionUpdate">
+		
+		update product_auction set memberId = #{memberId}, highPrice = #{highPrice}
+		where auctionId = ${auctionId}
+		
+	</update>
+	
+	<!-- 공구 마감 시 -->
+	<update id="groupProductCkUpdate">
+		update groupProduct set groupProductCk = '1'
+		where groupProductId = ${groupProductId}
+	</update>	
+	
+	
+	<!-- 경매 낙찰 시 -->
+	<update id="auctionCkUpdate">
+		update product_auction set auctionCk = '1'
+		where auctionId = ${auctionId}
+	</update>
+	
+	<select id="getGoodsList" resultType="com.somsomcloset.model.ProductVO">
+	
+		<![CDATA[
+		    select * from(
+		        select /*+INDEX_DESC(product SYS_C00328753)*/ rownum as rn, productId, productName, cateName, productPrice, productStock, productDiscount  
+		        from product
+		        where 
+	    ]]>
+	    
+	    <include refid="criteria"></include>
+	    
+	    <![CDATA[
+		        rownum <= #{pageNum} * #{amount} 
+	        	)
+	        where rn > (#{pageNum} -1) * #{amount}
+		]]>	  		
+	
+	</select>
+	
+	<!-- 경매 상품 리스트 -->
+	<select id="getAuctionGoodsList" resultType="com.somsomcloset.model.AuctionVO">
+	
+		<![CDATA[
+		    select * from(
+		        select /*+INDEX_DESC(auction SYS_C00328753)*/ rownum as rn, auctionId, productName, productPrice, endDate, highPrice, memberId, auctionCk  
+		        from product_auction
+		        where 
+	    
+		        rownum <= #{pageNum} * #{amount} 
+	        	)
+	        where rn > (#{pageNum} -1) * #{amount}
+		]]>	  		
+	
+	</select>
+	
+	<!-- 공구 상품 리스트 -->
+	<select id="getGroupProductGoodsList" resultType="com.somsomcloset.model.GroupProductVO">
+	
+		<![CDATA[
+		    select * from(
+		        select /*+INDEX_DESC(GroupProduct SYS_C00334294)*/ rownum as rn, groupProductId, groupProductName, groupProductSeller, cateName, groupProductPrice, groupProductStock, groupProductDiscount, groupProductIntro, groupProductContents, groupProductEndDate, groupProductCK  
+		        from GroupProduct
+		        where 
+	    
+		        rownum <= #{pageNum} * #{amount} 
+	        	)
+	        where rn > (#{pageNum} -1) * #{amount}
+		]]>	  		
+	
+	</select>
+	
+	<!-- 상품 총 개수 -->
+	<select id="goodsGetTotal" resultType="int">
+	
+		select count(*) from product
+		where
+		<include refid="criteria"></include> 
+		productId >0
+		
+	</select>
+	
+	
+	<select id="getCateInfo" resultType="com.somsomcloset.model.CateFilterDTO">
+	
+		select DISTINCT count(*) cateCount, b.cateName from product a left join product_cate b on a.cateName = b.cateName
+		
+		where 
+
+		<foreach item="type" collection="typeArr">		
+  				<choose>
+  					
+  					<when test="type == 'C'.toString()">
+  					
+  						 cateName like '%' #{cateName} '%'
+  					</when>
+  					<when test="type == 'T'.toString()">
+  					
+  						 productName like '%' #{keyword} '%'
+  					</when>
+  					  					
+  				</choose>
+  		</foreach>
+  		
+  		
+	
+	</select>		
+	
+	<!-- 상품 정보 -->
+	<select id="getGoodsInfo" resultType="com.somsomcloset.model.ProductVO">
+	
+			select a.PRODUCTID, a.PRODUCTNAME, c.CATENAME, a.PRODUCTPRICE, a.PRODUCTSTOCK, a.PRODUCTDISCOUNT, a.PRODUCTINTRO, a.PRODUCTCONTENTS
+			from product a 
+			left outer join product_cate c on a.catename = c.catename
+			where productId = ${productId}	
+	
+	</select>
+	
+	<!-- 경매 상품 정보 -->
+	<select id="getAuctionGoodsInfo" resultType="com.somsomcloset.model.AuctionVO">
+	
+			select auctionId, productName, productPrice, endDate, highPrice, memberId, auctionCk
+			from product_auction
+			where auctionId = #{auctionId}
+	
+	</select>	
+	
+	<!-- 공구 상품 정보 -->
+	<select id="getGroupProductInfo" resultType="com.somsomcloset.model.GroupProductVO">
+	
+			select groupProductId, groupProductName, groupProductSeller, cateName, groupProductPrice, groupProductStock, groupProductDiscount, groupProductIntro, groupProductContents, groupProductEndDate, groupProductCK  
+			from groupProduct
+			where groupProductId = #{groupProductId}
+	
+	</select>	
+	
+	<select id="getProductIdName" resultType="com.somsomcloset.model.ProductVO">
+	
+		select productId, productName from product 
+		where productId = #{productId}
+	
+	
+	</select>	
+	
+	<select id="likeSelect" resultType="com.somsomcloset.model.SelectDTO">
+	
+		select * from
+		(select rownum as rn, productId, productName, ratingAvg, (select cateName from product_cate where product.cateCode = product_cate.cateCode) as cateName
+		from product
+		order by ratingAvg desc nulls last)
+		<![CDATA[
+		where rn < 9
+		]]>	
+	
+	</select>	
+	
+		
+	
+  </mapper>
